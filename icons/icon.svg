@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0b1f12"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#7CFC00" stroke-width="10" opacity="0.55"/>
+  <line x1="256" y1="86" x2="256" y2="426" stroke="#7CFC00" stroke-width="6" opacity="0.55"/>
+  <line x1="86" y1="256" x2="426" y2="256" stroke="#7CFC00" stroke-width="6" opacity="0.55"/>
+  <!-- flagstick -->
+  <rect x="300" y="150" width="12" height="230" rx="6" fill="#eaf7ea"/>
+  <path d="M312 158 L408 188 L312 218 Z" fill="#ff5d5d"/>
+  <!-- ground -->
+  <ellipse cx="306" cy="384" rx="40" ry="10" fill="#4f9c2f"/>
+  <!-- range ticks -->
+  <circle cx="256" cy="256" r="8" fill="#7CFC00"/>
+</svg>

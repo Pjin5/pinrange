@@ -1,0 +1,124 @@
+:root {
+  --bg: #0b1f12;
+  --accent: #7CFC00;
+  --accent-dim: #4f9c2f;
+  --text: #eaf7ea;
+  --muted: #9fc7a3;
+  --danger: #ff5d5d;
+  --markerA: #ffd23f;   /* TOP */
+  --markerB: #3fd0ff;   /* BOTTOM */
+  font-family: -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; background: #000; color: var(--text); overscroll-behavior: none; user-select: none; }
+body { display: flex; flex-direction: column; height: 100dvh; }
+.hidden { display: none !important; }
+
+/* ---------- camera stage (the hero — kept clear) ---------- */
+#stage { position: relative; flex: 1 1 auto; overflow: hidden; background: #000; }
+#video, #frame, #overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+#video, #frame { object-fit: contain; }
+#video { z-index: 0; }
+#frame { z-index: 1; }
+#overlay { z-index: 3; touch-action: none; }
+
+/* thin see-through readout that fades into the camera */
+#pill {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 4;
+  padding: max(8px, env(safe-area-inset-top)) 16px 22px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+  background: linear-gradient(180deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,.32) 55%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
+}
+.bigdist { font-size: 34px; font-weight: 800; line-height: 1; color: var(--accent); text-shadow: 0 1px 4px #000; }
+.bigdist small { font-size: 14px; color: var(--muted); font-weight: 600; margin-left: 3px; }
+.subdist { font-size: 13px; color: var(--muted); text-shadow: 0 1px 3px #000; }
+.slopeline { width: 100%; font-size: 13px; color: var(--markerB); font-weight: 600; text-shadow: 0 1px 3px #000; }
+.warn { width: 100%; font-size: 12px; color: var(--markerA); text-shadow: 0 1px 3px #000; }
+
+#liveHint {
+  position: absolute; bottom: 10px; left: 0; right: 0; z-index: 4; text-align: center;
+  color: var(--muted); font-size: 12px; pointer-events: none; padding: 0 16px; text-shadow: 0 1px 3px #000;
+}
+
+/* detached fine-tune trackpad — control space, away from the target */
+#refinePad {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 6;
+  touch-action: none; background: linear-gradient(0deg, rgba(0,0,0,.42), rgba(0,0,0,0));
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding-bottom: 14px; gap: 8px;
+}
+#refineHint { color: var(--text); font-size: 13px; opacity: .8; text-shadow: 0 1px 3px #000; }
+#refineActive {
+  font-weight: 800; font-size: 15px; letter-spacing: .5px; padding: 4px 14px; border-radius: 999px;
+  background: rgba(0,0,0,.5); border: 1.5px solid var(--markerA); color: var(--markerA);
+}
+#refineActive.bot { border-color: var(--markerB); color: var(--markerB); }
+
+/* magnifier loupe */
+#loupe {
+  position: absolute; width: 132px; height: 132px; border-radius: 50%; z-index: 5;
+  border: 2px solid var(--accent); pointer-events: none; overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,.6); display: none; background: #000;
+}
+#loupe canvas { width: 100%; height: 100%; }
+#loupe .cross { position: absolute; inset: 0; }
+
+/* ---------- minimal bottom bar ---------- */
+#bar {
+  flex: 0 0 auto; display: flex; gap: 10px; align-items: center;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: #07140b; border-top: 1px solid rgba(124,252,0,.15);
+}
+button {
+  font: inherit; color: var(--text); background: #14301c;
+  border: 1px solid var(--accent-dim); border-radius: 12px;
+  padding: 14px 16px; font-weight: 700; cursor: pointer;
+}
+button:active { transform: translateY(1px); }
+button.primary { flex: 1; background: var(--accent); color: #06210a; border-color: var(--accent); font-size: 17px; }
+button.barbtn { flex: 0 0 auto; background: transparent; }
+button.on { background: var(--accent); color: #06210a; border-color: var(--accent); }
+button:disabled { opacity: .4; }
+
+/* ---------- slide-up tools sheet ---------- */
+#sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+  max-height: 82dvh; overflow: auto;
+  background: #0d2414; border-top: 2px solid var(--accent-dim);
+  border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.6);
+}
+.sheetbar { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: #0d2414; border-bottom: 1px solid rgba(124,252,0,.15); }
+.sheettitle { color: var(--accent); font-weight: 800; font-size: 16px; }
+.sheetbody { padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
+
+label.fld { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
+select, input[type=number] {
+  font: inherit; color: var(--text); background: #0d2414;
+  border: 1px solid var(--accent-dim); border-radius: 10px; padding: 12px;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid2 button, .valrow button { padding: 12px; }
+.nudgeTop { color: var(--markerA); border-color: var(--markerA); }
+.nudgeBot { color: var(--markerB); border-color: var(--markerB); }
+.zoomrow { display: flex; align-items: center; gap: 10px; }
+.zoomcap { font-size: 13px; color: var(--muted); flex: 0 0 auto; }
+#zoomLabel { font-size: 13px; color: var(--accent); width: 42px; text-align: right; }
+#zoomRange { flex: 1; accent-color: var(--accent); }
+.valrow { display: flex; gap: 8px; }
+.valrow input { flex: 1; min-width: 0; }
+.statline { font-size: 12px; color: var(--muted); text-align: center; }
+
+/* ---------- calibration modal ---------- */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 18px; }
+.modal.hidden { display: none; }
+.sheet2 { background: #0d2414; border: 1px solid var(--accent-dim); border-radius: 18px; padding: 18px; max-width: 460px; width: 100%; max-height: 90dvh; overflow: auto; }
+.sheet2 h2 { margin: 0 0 6px; color: var(--accent); font-size: 20px; }
+.sheet2 p { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 6px 0; }
+.sheet2 ol { color: var(--muted); font-size: 13px; line-height: 1.55; padding-left: 20px; }
+.sheet2 .row { display: flex; gap: 8px; margin-top: 12px; }
+.sheet2 .row.center { justify-content: center; }
+.sheet2 .row button { flex: 1; }
+.sheet2 label.fld { flex: 1; }
+a { color: var(--accent); }

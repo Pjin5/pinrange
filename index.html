@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1f12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PinRange" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+  <title>PinRange — Golf Range Finder</title>
+</head>
+<body>
+  <div id="stage">
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="frame"></canvas>
+    <canvas id="overlay"></canvas>
+
+    <!-- thin, see-through readout that fades into the camera -->
+    <div id="pill">
+      <span class="bigdist" id="distMain">—</span>
+      <span class="subdist" id="distSub">aim at the pin</span>
+      <span class="slopeline hidden" id="distSlope"></span>
+      <span class="warn hidden" id="distWarn"></span>
+    </div>
+
+    <div id="loupe"><canvas id="loupeCanvas" width="132" height="132"></canvas>
+      <svg class="cross" viewBox="0 0 132 132"><line x1="66" y1="0" x2="66" y2="132" stroke="#7CFC00" stroke-width="1"/><line x1="0" y1="66" x2="132" y2="66" stroke="#7CFC00" stroke-width="1"/></svg>
+    </div>
+
+    <div id="liveHint">drag the <b style="color:var(--markerA)">TOP</b> &amp; <b style="color:var(--markerB)">BOTTOM</b> bars onto the pin</div>
+
+    <!-- detached fine-tune trackpad (frozen mode only): drag here to move the
+         active bracket without your finger covering the pin -->
+    <div id="refinePad" class="hidden">
+      <div id="refineHint">✋ drag here to fine-tune · tap to switch bar</div>
+      <div id="refineActive">TOP</div>
+    </div>
+  </div>
+
+  <!-- minimal always-on control bar -->
+  <div id="bar">
+    <button id="lockBtn" class="primary">🔒 Lock</button>
+    <button id="slopeBtn" class="ghost barbtn" title="Slope / plays-like">⛰</button>
+    <button id="moreBtn" class="ghost barbtn">☰ More</button>
+  </div>
+
+  <!-- slide-up tools panel (hidden by default) -->
+  <div id="sheet" class="hidden">
+    <div class="sheetbar">
+      <span class="sheettitle">Tools</span>
+      <button id="sheetClose" class="ghost barbtn">Done</button>
+    </div>
+    <div class="sheetbody">
+      <label class="fld">Reference (what you'll mark)
+        <select id="refSelect"></select>
+      </label>
+      <label class="fld hidden" id="customWrap">Reference length (feet)
+        <input id="customFeet" type="number" step="0.01" min="0.1" value="7" inputmode="decimal" />
+      </label>
+
+      <div class="zoomrow">
+        <span class="zoomcap">🔍 Zoom</span>
+        <input id="zoomRange" type="range" min="1" max="6" step="0.5" value="1" />
+        <span id="zoomLabel">1.0×</span>
+      </div>
+
+      <div class="grid2">
+        <button id="nudgeAup" class="ghost nudgeTop">TOP ▲</button>
+        <button id="nudgeAdn" class="ghost nudgeTop">TOP ▼</button>
+        <button id="nudgeBup" class="ghost nudgeBot">BOT ▲</button>
+        <button id="nudgeBdn" class="ghost nudgeBot">BOT ▼</button>
+      </div>
+
+      <div class="grid2">
+        <button id="snapBtn" class="ghost">✨ Snap edges</button>
+        <button id="autoBtn" class="ghost">🎯 Auto-aim</button>
+        <button id="photoBtn" class="ghost">📁 Photo</button>
+        <button id="calibBtn" class="ghost">⚙︎ Calibrate</button>
+      </div>
+
+      <div class="valrow">
+        <input id="laserInput" type="number" step="0.1" placeholder="laser yd" inputmode="decimal" />
+        <button id="logBtn" class="ghost">＋ Log</button>
+        <button id="csvBtn" class="ghost">⤓ CSV</button>
+      </div>
+      <span id="autoState" class="statline"></span>
+      <div class="statline" id="statline"></div>
+    </div>
+    <input id="photoInput" type="file" accept="image/*" class="hidden" />
+  </div>
+
+  <!-- Calibration / settings modal -->
+  <div id="calibModal" class="modal hidden">
+    <div class="sheet2">
+      <h2>Calibrate this phone</h2>
+      <p><b>For the best accuracy, calibrate against an actual flagstick</b> at a laser-measured distance. The assumed pin height then divides out of both calibration and measurement, so any error in "7 ft" cancels — you're effectively calibrating distance directly.</p>
+      <ol>
+        <li>Stand a <b>laser-measured</b> (or carefully paced) distance from a real flagstick — ideally the practice-green pin, same height as today's course pins.</li>
+        <li>Lock the frame, hit <b>✨ Snap</b>, fine-tune TOP &amp; BOTTOM.</li>
+        <li>Enter that pin's height + the true distance, then Save.</li>
+      </ol>
+      <div class="row">
+        <label class="fld">Target height (feet)
+          <input id="calFeet" type="number" step="0.01" value="7" inputmode="decimal" />
+        </label>
+        <label class="fld">Distance (yards)
+          <input id="calYards" type="number" step="0.1" value="50" inputmode="decimal" />
+        </label>
+      </div>
+      <p class="statline" id="calState">Marked length: — px</p>
+      <div class="row">
+        <button id="calSaveBtn" class="primary">Save calibration</button>
+        <button id="calResetBtn" class="ghost">Reset</button>
+        <button id="calCloseBtn" class="ghost">Close</button>
+      </div>
+      <p class="statline" id="calCurrent"></p>
+      <div class="row center">
+        <label class="fld" style="flex:0 0 auto;flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" id="unitToggle" /> Show meters as primary
+        </label>
+      </div>
+      <div class="row center">
+        <label class="fld" style="flex:0 0 auto;flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" id="tournamentToggle" /> Tournament mode (disable slope)
+        </label>
+      </div>
+      <p class="statline">Slope/elevation reading is not allowed in competition (USGA Rule&nbsp;4.3a) unless a Local Rule permits.</p>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
